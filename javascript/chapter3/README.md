@@ -38,11 +38,76 @@ JavaScript包括一个原型链特性，允许对象继承另一对象的属性�
 
 
 ## 3.2 检索
-要检索对象中包含的值，可以采用[]后缀中括住一个字符串表达式的方式。如果字符串表达式是一个常数，而且它是一个合法的JavaScript标识符而并非保留字，那么也可以用.表示法来代替。优先考虑使用.表示法，因为它更紧凑且可读性更好。
+要检索对象中包含的值，可以采用`[]`后缀中括住一个字符串表达式的方式。如果字符串表达式是一个常数，而且它是一个合法的JavaScript标识符而并非保留字，那么也可以用`.`表示法来代替。优先考虑使用`.`表示法，因为它更紧凑且可读性更好。
 
 	stooge["first-name"]
 	flight.departure.ISAT
 
 如果你尝试检索一个并不存在的成员元素的值，将会返回一个undefined值。
 
-||运算符可以用来填充默认值：
+	stooge["middle-name"]; //undefined
+	flight.status;         //undefined
+
+`||`运算符可以用来填充默认值：
+
+	var middle = stooge["middle-name"] || "(none)";
+	var statue = flight.status || "unknown";
+
+尝试检索一个undeined的值将会导致TypeError异常。这可以通过`&&`运算符来避免错误。
+
+	flight.equipment
+	flight.equipment.model
+	flight.equipment && flight.equipment.model
+
+## 3.3 更新
+对象中的值可以通过赋值语句来更新。如果属性名已经存在与对象中，那么这个属性的值被替换。
+
+	stooge['first-name'] = 'Jerome';
+
+如果对象之前并没有拥有那个属性名，那么该属性就被扩充到该对象中。
+
+	stooge['middle-name'] = 'Lester';
+	stooge.nickname = 'Curly';
+	flight.equipment = {
+		model: 'Boeing 777';
+	};
+	flight.status = 'overdue';
+
+## 3.4 引用
+对象通过引用来传递。它们永远不会被拷贝;
+
+	var x = stooge;
+	x.nickname = 'Curly';
+	var nick = stooge.nickname;
+		// 因为x和stooge是指向同一个对象的引用，所以nick是'Curly'
+	
+	var a = {}, b = {}, c = {};
+		// a b c 每个都引用不同的对象
+
+	a = b = c = {};
+		// a b c 都引用相同的对象
+
+
+## 3.5 原型
+每个对象都链接到一个原型对象，并且它可以从中继承属性。所有对象字面量创建的对象都链接到Object.prototype这个JavaScript中标准的对象。
+
+当你创建一个对象时，你可以选择某个对象作为它的原型。JavaScript提供的实现机制杂乱而复杂，但其实可以被明显地简化。我们将给Object增加一个beget方法。这个beget方法创建一个使用原对象作为其原型的新对象。下一张有更多关于函数的内容。
+
+	if (typeof Object.beget !== 'function')
+	{
+		Object.beget = function(o) {
+			var F = function() {};
+			F.prototype = o;
+			return new F();
+		}
+	}
+
+	var another_stooge = Object.beget(stooge);
+
+原型连接在更新时是不起作用的。当我们对某个对象作出改变时，不会触及到该对象的原型：
+	
+	another_stooge['first-name'] = 'Harry';
+	another_stooge['middle-name'] = 'Mouses';
+	another_stooge.nickname = 'Moe';
+
+原型连接只有在检索值的时候才被用到。如果我们尝试去获取对象的某个属性值，且该对象没有此属性名，那么JavaScript会试着从原型对象中获取属性值。如果那个原型对象也没有该属性值，那么再从它的原型中寻找，依次类推，知道该过程最后到达终点Object.prototype。如果想要的属性完全不存在于原型链中，那么结果就是undefined值。这个过程成为`委托`。
